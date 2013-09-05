@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>DJs Music 2014</title>
 <style type="text/css">
+/* Elements */
 html, body{
 	margin:0;
 	padding:0;
@@ -15,15 +16,66 @@ html, body{
 h1, h2, h3, h4{
 	margin:0;
 }
+a, a:link, a:focus{
+	color:#4183c4;
+	text-decoration:none;
+}
+a:hover{
+	text-decoration:underline;
+}
+img{ border:none; }
+/* Layout */
 header{
 	color:#FFF;
 	height:50px;
 }
-#body{
+#main{
 	margin:0;
 	padding-top:50px;
 	min-height:100%;
+	padding-bottom:50px;
 }
+/* Player */
+#player-wrap{
+	height:60px;
+	border-top:solid 1px #000;
+	background-color:#2c2c2c;
+	position:fixed;
+	bottom:0px;
+	left:0px;
+	right:0px;
+	color:#fff;
+}
+#player-container{
+	position:absolute;
+	height:59px;
+	border-top:1px solid #3d3d3d;
+	z-index:1000;
+	bottom:0px;
+	left:0px;
+	right:0px;
+}
+#now-playing{
+	background:#181818;
+	border:solid 1px #000;
+	box-shadow: 0 1px 0 0 rgba(255,255,255,0.05), inset 0 1px 0 0 rgba(0,0,0,0.2);
+	position: absolute;
+	height: 44px;
+	width:600px;
+	left: 50%;
+	margin-left:-300px;
+	right: 135px;
+	top:6px;
+	border-radius: 3px;
+}
+footer{
+	text-align:center;
+	color:#CCC;
+	padding:0 10px;
+	font-size:0.9em;
+	text-shadow:#000 0 0 3px;
+}
+/* Design classes */
 .big-photo{
 	background-repeat:no-repeat;
 	background-position:top;
@@ -39,49 +91,135 @@ header{
 	text-shadow:#333 0 2px;
 	font-size:1.5em;
 	margin:20px 0;
+	padding:0 30px;
 }
-.light{
-	color:white;
-	color:rgba(255, 255, 255, 0.9);
-}
+/* Boxes */
 .box{
-	background:rgba(245, 245, 245, 0.9);
 	border-radius:4px;
-	border:#CCC solid 1px;
-	border-bottom:#999 solid 3px;
 	padding:20px;
 	margin:10px 0;
+	border:#CCC solid 1px;
+	border-bottom:#999 solid 3px;
 }
-footer{
-	text-align:center;
-	color:#CCC;
-	padding:0 10px;
-	margin-top:-40px;
-	font-size:0.9em;
+.bg-white{ background:rgba(245, 245, 245, 0.9); }
+.bg-blue{ background:#4183c4; }
+.bg-lightGrey{ background:#999; }
+.bg-medGrey{ background:#666; }
+.bg-darkGrey{ background:#333; }
+.bg-green{ background:#6CC644; }
+.bg-red{ background:#BD2C00; }
+.bg-orange{ background:#f93; }
+/* Text color */
+.text-white{ color:rgba(245, 245, 245, 0.9); }
+.text-blue{ color:#4183c4; }
+.text-lightGrey{ color:#999; }
+.text-medGrey{ color:#666; }
+.text-darkGrey{ color:#333; color:#ccc; }
+.text-green{ color:#6CC644; }
+.text-red{ color:#BD2C00; }
+.text-orange{ color:#f93; }
+/* Alignment */
+.right{
+	float:right;
+}
+.left{
+	float:left;
+}
+/* Lists */
+ul.inline{
+	display:inline-block;
+	list-style:none;
+	margin:0;
+	padding:0;
+}
+ul.inline li{
+	display:inline-block;
+}
+/* Buttons */
+.btn{
+	width: 28px;
+	height: 28px;
+	border: solid 1px #111;
+	border-right: 0;
+	padding: 0;
+	margin: 0;
+	color: #bbb;
+	line-height: 28px;
+	background-color: #404040;
+	background-image: -moz-linear-gradient(top, #444, #3b3b3b);
+	background-image: -ms-linear-gradient(top, #444, #3b3b3b);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#444), to(#3b3b3b));
+	background-image: -webkit-linear-gradient(top, #444, #3b3b3b);
+	background-image: -o-linear-gradient(top, #444, #3b3b3b);
+	background-image: linear-gradient(top, #444, #3b3b3b);
+	background-repeat: repeat-x;
+	filter: progid:DXImageTransform.Microsoft.Gradient(startColorstr='#ff444444', endColorstr='#ff3b3b3b', GradientType=0);
+	-webkit-box-shadow: 0 1px 0 0 #303030,inset 0 1px 0 0 #4e4e4e;
+	-moz-box-shadow: 0 1px 0 0 #303030,inset 0 1px 0 0 #4e4e4e;
+	box-shadow: 0 1px 0 0 #303030,inset 0 1px 0 0 #4e4e4e;
+	display:inline-block;
+}
+.btn-group {
+	position: relative;
+	float: left;
+	margin: 0 7px 0 0;
+	display: inline-block;
+}
+.btn-group .btn{
+	position: relative;
+	float: left;
+	margin-left: -8px;
+	z-index: 1;
+	-webkit-border-radius: 0;
+	-moz-border-radius: 0;
+	border-radius: 0;
+}
+.btn-group:first-child {
+	margin-left: 0px;
+}
+.btn-group:last-child {
+	margin-right: 0px;
 }
 </style>
+<link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet">
 </head>
 
 <body>
 <header>
 	<div class="contained">
-		<img src="img/logo/small.png" alt="DJs Music" />
+		<a href="/"><img src="assets/img/logo/small.png" alt="DJs Music" /></a>
+		
+		<div class="right">
+			<a href="#login">Login</a>
+			<ul class="inline btn-group">
+				<li><a href="#upload" title="Upload music" class="btn"><i class="icon-cloud-upload"></i></a></li>
+			</ul>
+		</div>
 	</div>
 </header>
-<div id="body" class="background big-photo" style="background-image:url(img/bg/redcarpet.jpg)">
-	<div class="contained">
-		<div class="hero light">
+<div id="main" class="background big-photo" style="background-image:url(assets/img/bg/redcarpet.jpg)">
+	<div class="contained" style="">
+		<div class="hero text-white">
 			<h1>Welcome to the 2014 version of DJs Music</h1>
 			<p>Try now all the new features and the lovely updated design!</p>
 		</div>
-		<div class="box">
+		<div class="box bg-white">
 			<p>We are working hard from the ground up to bring you the best DJ social network.</p>
-			<p>The full new version will be released on our <strong style="color:#C12024">7th birthday</strong>, at the beginning of 2014</p>
+			<p>The full new version will be released on our <strong class="text-blue">7th birthday</strong>, at the beginning of 2014</p>
+			<div class="box bg-medGrey text-orange">
+				<h3>Some sort of anouncement</h3>
+				<p>Dark box</p>
+			</div>
 		</div>
 	</div>
+	<div id="player-wrap">
+		<div id="player-container">
+			<div id="now-playing">Drag music here to play</div>
+		</div>
+	</div>
+	<footer>
+		<p>&copy; <a href="http://djs-music.com">DJs Music</a> (All rights reserved) &bull; <a href="http://urbanoalvarez.es">Alejandro U. Alvarez</a></p>
+	</footer>
 </div>
-<footer>
-	<p>&copy; DJs Music (All rights reserved)</p>
-</footer>
 </body>
 </html>
