@@ -11,14 +11,15 @@ $app = new \Slim\Slim(array(
 
 $app->setName('DJsMusic');
 
+
 // API endpoints
-$app->get('/songs/top', 'getEmployees');
+$app->get('/', 'getInfo');
 
 $app->run();
 
 // Functions
-function getTopSongs() {
-	echo 'Not ready';
+function getInfo(){
+	echo 'DJs Music API v1.0';
 }
 
 function getConnection() {
