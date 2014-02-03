@@ -48,7 +48,7 @@ function getSong($id){
 	
 	$stmt = $con->prepare('
 		SELECT
-			music.id, music.title, music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating, music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
+			music.id, music.title AS name, music.extra AS description, ROUND(music.size/1000000,2) AS size, music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating, music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
 			users.id AS artistId, users.user,
 			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
 			albums.id AS albumId, albums.name AS albumName,
@@ -65,19 +65,21 @@ function getSong($id){
 	
 	$track = $track[0];
 	// Fix results
+	$track['name'] = ucwords($track['name']);
 	$track['url'] = 'http://songs.djs-music.com/'.$track['url'];
 	$track['released'] = date("j M Y",$track['released']);
+	$track['tags'] = explode(',',$track['tags']);
 	
 	$user = Array(
 		'id' => $track['artistId'],
 		'name' => $track['user'],
-		'photo' => $track['userPhoto']
+		'photo' => 'http://static.djs-music.com/'.$track['userPhoto']
 	);
 	
 	$album = Array(
 		'id' => $track['albumId'],
 		'name' => $track['albumName'],
-		'photo' => $track['albumPhoto']
+		'photo' => 'http://static.djs-music.com/'.$track['albumPhoto']
 	);
 	
 	// Delete those from the result
@@ -98,65 +100,97 @@ function getSong($id){
 	return;
 }
 
-// Sample
+/**
+ * Get a list of tracks with optional filters applied
+ * Possible filters:
+ * 	- User
+ * 	- Album
+ * Order results:
+ * 	- Downloads
+ * 	- Release date
+ * Paging:
+ * 	- Per page
+ * 	- Page
+ */
 function getSongs(){
-	$songs = Array(
-		Array(
-			'track'=> Array(
-				'id' => 28,
-				'name' => 'Latest Song 1',
-				'duration'=> 124,
-				'downloads' => 34,
-				'plays' => 247,
-				'rating' => 3,
-				'released' => '8 Aug 2013',
-				'description' => 'Track description...',
-				'size' => '8,57',
-				'bitrate' => 128,
-				'url'=> 'http://songs.djs-music.com/26-19-C5sJG6f8em.mp3',
-				'tags' => Array('Tag 1', 'Tag 2')
-			),
-			'artist' => Array(
-				'id' => 1,
-				'name' => 'DJ Name 1',
-				'photo'=> 'http://static.djs-music.com/img/djs/eDyR54sg2c.jpg',
-			),
-			'album' => Array(
-				'id' => 1,
-				'name' => 'Album name 1',
-				'photo'=> 'img/logo.jpg'
-			)
-		),
-		Array(
-			'track'=> Array(
-				'id' => 1,
-				'name' => 'Latest Song 2',
-				'duration'=> 124,
-				'downloads' => 34,
-				'plays' => 247,
-				'rating' => 3,
-				'released' => '8 Aug 2013',
-				'description' => 'Track description...',
-				'size' => '8,57',
-				'bitrate' => 128,
-				'url'=> 'http://songs.djs-music.com/26-19-C5sJG6f8em.mp3',
-				'tags' => Array('Tag 1', 'Tag 2')
-			),
-			'artist' => Array(
-				'id' => 1,
-				'name' => 'DJ Name 2',
-				'photo'=> 'http://static.djs-music.com/img/djs/eDyR54sg2c.jpg',
-			),
-			'album' => Array(
-				'id' => 1,
-				'name' => 'Album name 1',
-				'photo'=> 'img/logo.jpg'
-			)
-		),
-	);
+	$con = getConnection();
 	
+	// Filter data
+	$filters = '';
+	$data = Array();
 	
-	echo json_encode($songs);
+	// Detect filters
+	if(isset($_GET['user']) && $_GET['user']>0 && is_numeric($_GET['user'])){
+		$filters .= ' AND users.id = ?';
+		$data[] = $_GET['user'];
+	}
+	
+	$stmt = $con->prepare('
+		SELECT
+			music.id, music.title AS name, music.extra AS description, ROUND(music.size/1000000,2) AS size, music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating, music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
+			users.id AS artistId, users.user,
+			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
+			albums.id AS albumId, albums.name AS albumName,
+			(SELECT src FROM pics WHERE id = albums.picid) AS albumPhoto
+		FROM
+			music LEFT OUTER JOIN albums ON music.albumid = albums.id,
+			users
+		WHERE
+			music.usid = users.id
+			'.$filters.'
+		ORDER BY
+			music.timestamp DESC
+		LIMIT 0,10');
+	$stmt->execute($data);
+	
+	$tracks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	$total = count($tracks);
+	
+	$return = Array();
+	
+	for($i=0;$i<$total;$i++){
+		$track = $tracks[$i];
+		
+		// Fix results
+		$track['name'] = ucwords($track['name']);
+		$track['user'] = ucwords($track['user']);
+		$track['url'] = 'http://songs.djs-music.com/'.$track['url'];
+		$track['released'] = date("j M Y",$track['released']);
+		$track['tags'] = explode(',',$track['tags']);
+		
+		if($track['albumPhoto'] == 'img/albums/no_album.gif'){
+			$track['albumPhoto'] = $track['userPhoto'];
+		}
+		
+		$user = Array(
+			'id' => $track['artistId'],
+			'name' => $track['user'],
+			'photo' => 'http://static.djs-music.com/'.$track['userPhoto']
+		);
+		
+		$album = Array(
+			'id' => $track['albumId'],
+			'name' => $track['albumName'],
+			'photo' => 'http://static.djs-music.com/'.$track['albumPhoto']
+		);
+		
+		// Delete those from the result
+		unset($track['artistId']);
+		unset($track['user']);
+		unset($track['userPhoto']);
+		unset($track['albumId']);
+		unset($track['albumName']);
+		unset($track['albumPhoto']);
+		
+		$return[] = Array(
+			'track'=> $track,
+			'artist'=> $user,
+			'album' => $album
+		);
+	}
+	
+	echo json_encode($return);
+	return;
 }
 
 // Sample
@@ -191,25 +225,38 @@ function getUsers(){
 }
 
 // Sample
-function getUser(){
-	$album = Array(
-		'artist' => Array(
-			'id' => 1,
-			'name' => 'DJ Name 1',
-			'photo'=> 'http://static.djs-music.com/img/djs/eDyR54sg2c.jpg',
-			'description' => 'DJ Description / Short Bio'
-		),
-		'album' => Array(
-			'id' => 1,
-			'name' => 'Album name 1',
-			'photo'=> 'img/logo.jpg',
-			'description' => 'Album description',
-			'plays' => 1314,
-			'downloads' => 4523
-		)
+function getUser($id){
+	$con = getConnection();
+	
+	$stmt = $con->prepare('
+		SELECT
+			users.id, users.user AS name, users.city, users.country, users.web, users.interests AS description,
+			(SELECT src FROM pics WHERE id = users.picid) AS photo,
+			(SELECT SUM(listens) FROM music WHERE music.usid = users.id) AS plays,
+			(SELECT SUM(downloads) FROM music WHERE music.usid = users.id) AS downloads
+		FROM
+			users
+		WHERE
+			users.id = ?
+		LIMIT 1');
+	$stmt->execute(Array($id));
+	
+	$info = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	
+	if(count($info)==1){
+		$info = $info[0];
+	}
+	
+	$info['photo'] = 'http://static.djs-music.com/'.$info['photo'];
+	$info['name'] = ucwords($info['name']);
+	$info['description'] = ucfirst($info['description']);
+	
+	$return = Array(
+		'artist' => $info
 	);
 	
-	echo json_encode($album);
+	echo json_encode($return);
+	return;
 }
 
 // Get a MySQL connection
