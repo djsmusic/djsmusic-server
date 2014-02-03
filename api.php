@@ -40,36 +40,62 @@ function getInfo(){
 	echo json_encode('DJs Music API v1.0');
 }
 
-// Sample
-function getSong($param){
-	$song = Array(
-		'track'=> Array(
-			'id' => 1,
-			'name' => 'Latest Song 1',
-			'duration'=> 124,
-			'downloads' => 34,
-			'plays' => 247,
-			'rating' => 3,
-			'released' => '8 Aug 2013',
-			'description' => 'Track description...',
-			'size' => '8,57',
-			'bitrate' => 128,
-			'url'=> 'http://songs.djs-music.com/26-19-C5sJG6f8em.mp3',
-			'tags' => Array('Tag 1', 'Tag 2')
-		),
-		'artist' => Array(
-			'id' => 1,
-			'name' => 'DJ Name 1',
-			'photo'=> 'http://static.djs-music.com/img/djs/eDyR54sg2c.jpg',
-		),
-		'album' => Array(
-			'id' => 1,
-			'name' => 'Album name 1',
-			'photo'=> 'img/logo.jpg'
-		)
+/**
+ * Get a Song Object for the specified $id
+ */
+function getSong($id){
+	$con = getConnection();
+	
+	$stmt = $con->prepare('
+		SELECT
+			music.id, music.title, music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating, music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
+			users.id AS artistId, users.user,
+			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
+			albums.id AS albumId, albums.name AS albumName,
+			(SELECT src FROM pics WHERE id = albums.picid) AS albumPhoto
+		FROM
+			music LEFT OUTER JOIN albums ON music.albumid = albums.id,
+			users
+		WHERE
+			music.usid = users.id AND music.id = ?
+		LIMIT 1');
+	$stmt->execute(Array($id));
+	
+	$track = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	
+	$track = $track[0];
+	// Fix results
+	$track['url'] = 'http://songs.djs-music.com/'.$track['url'];
+	$track['released'] = date("j M Y",$track['released']);
+	
+	$user = Array(
+		'id' => $track['artistId'],
+		'name' => $track['user'],
+		'photo' => $track['userPhoto']
 	);
 	
-	echo json_encode($song);
+	$album = Array(
+		'id' => $track['albumId'],
+		'name' => $track['albumName'],
+		'photo' => $track['albumPhoto']
+	);
+	
+	// Delete those from the result
+	unset($track['artistId']);
+	unset($track['user']);
+	unset($track['userPhoto']);
+	unset($track['albumId']);
+	unset($track['albumName']);
+	unset($track['albumPhoto']);
+	
+	$result = Array(
+		'track'=> $track,
+		'artist'=> $user,
+		'album' => $album
+	);
+	
+	echo json_encode($result);
+	return;
 }
 
 // Sample
@@ -77,7 +103,7 @@ function getSongs(){
 	$songs = Array(
 		Array(
 			'track'=> Array(
-				'id' => 1,
+				'id' => 28,
 				'name' => 'Latest Song 1',
 				'duration'=> 124,
 				'downloads' => 34,
@@ -186,12 +212,12 @@ function getUser(){
 	echo json_encode($album);
 }
 
+// Get a MySQL connection
 function getConnection() {
-    $dbhost="localhost";
-    $dbuser="root";
-    $dbpass="";
-    $dbname="directory";
-    $dbh = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass);  
+	// Requires keys.production.php
+	$dbhost = DB_HOST;
+	$dbname = DB_NAME;
+    $dbh = new PDO("mysql:host={$dbhost};dbname={$dbname}", DB_USER, DB_PASS);  
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     return $dbh;
 }
