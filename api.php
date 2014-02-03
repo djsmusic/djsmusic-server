@@ -66,6 +66,7 @@ function getSong($id){
 	$track = $track[0];
 	// Fix results
 	$track['name'] = ucwords($track['name']);
+	$track['user'] = ucwords($track['user']);
 	$track['url'] = 'http://songs.djs-music.com/'.$track['url'];
 	$track['released'] = date("j M Y",$track['released']);
 	$track['tags'] = explode(',',$track['tags']);
