@@ -2,6 +2,9 @@
 
 *.log
 
+#Sensitive files
+*.production.php
+
 # PSD files
 *.psd
 
