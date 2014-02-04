@@ -201,7 +201,71 @@ function getSongs(){
 
 // Sample
 function getAlbums(){
-	echo json_encode('Albums data');
+	$con = getConnection();
+	
+	// Filter data
+	$filters = '';
+	$data = Array();
+	
+	// Detect filters
+	if(isset($_GET['user']) && $_GET['user']>0 && is_numeric($_GET['user'])){
+		$filters .= ' AND users.id = ?';
+		$data[] = $_GET['user'];
+	}
+	
+	if(isset($_GET['album']) && $_GET['album']>0 && is_numeric($_GET['album'])){
+		$filters .= ' AND music.albumid = ?';
+		$data[] = $_GET['album'];
+	}
+	
+	$stmt = $con->prepare('
+		SELECT
+			users.id AS userId, users.user AS userName,
+			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
+			albums.id AS id, albums.name, albums.description,
+			(SELECT src FROM pics WHERE id = albums.picid) AS photo,
+			(SELECT COUNT(*) FROM music WHERE music.albumid = albums.id) AS tracks,
+			(SELECT SUM(listens) FROM music WHERE music.albumid = albums.id) AS plays,
+			(SELECT SUM(downloads) FROM music WHERE music.albumid = albums.id) AS downloads
+		FROM
+			albums, users
+		WHERE
+			albums.usid = users.id
+			'.$filters.'
+		LIMIT 10');
+	$stmt->execute($data);
+	
+	$albums = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	
+	$total = count($albums);
+	
+	$return = Array();
+	
+	for($i=0;$i<$total;$i++){
+		$info = $albums[$i];
+		
+		// Fix data
+		$info['photo'] = 'http://static.djs-music.com/'.$info['photo'];
+		
+		$user = Array(
+			'id' => $info['userId'],
+			'name' => ucwords($info['userName']),
+			'photo' => 'http://static.djs-music.com/'.$info['userPhoto']
+		);
+		
+		// Delete those from the result
+		unset($info['userId']);
+		unset($info['userName']);
+		unset($info['userPhoto']);
+		
+		$return[] = Array(
+			'album' => $info,
+			'artist' => $user
+		);
+	}
+	
+	echo json_encode($return);
+	return;
 }
 
 // Sample
@@ -214,6 +278,7 @@ function getAlbum($id){
 			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
 			albums.id AS id, albums.name, albums.description,
 			(SELECT src FROM pics WHERE id = albums.picid) AS photo,
+			(SELECT COUNT(*) FROM music WHERE music.albumid = albums.id) AS tracks,
 			(SELECT SUM(listens) FROM music WHERE music.albumid = albums.id) AS plays,
 			(SELECT SUM(downloads) FROM music WHERE music.albumid = albums.id) AS downloads
 		FROM
