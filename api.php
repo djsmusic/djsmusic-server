@@ -126,6 +126,11 @@ function getSongs(){
 		$data[] = $_GET['user'];
 	}
 	
+	if(isset($_GET['album']) && $_GET['album']>0 && is_numeric($_GET['album'])){
+		$filters .= ' AND music.albumid = ?';
+		$data[] = $_GET['album'];
+	}
+	
 	$stmt = $con->prepare('
 		SELECT
 			music.id, music.title AS name, music.extra AS description, ROUND(music.size/1000000,2) AS size, music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating, music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
@@ -200,28 +205,71 @@ function getAlbums(){
 }
 
 // Sample
-function getAlbum(){
-	$album = Array(
-		'artist' => Array(
-			'id' => 1,
-			'name' => 'DJ Name 1',
-			'photo'=> 'http://static.djs-music.com/img/djs/eDyR54sg2c.jpg',
-		),
-		'album' => Array(
-			'id' => 1,
-			'name' => 'Album name 1',
-			'photo'=> 'img/logo.jpg',
-			'description' => 'Album description',
-			'plays' => 1314,
-			'downloads' => 4523
-		)
+function getAlbum($id){
+	$con = getConnection();
+	
+	$stmt = $con->prepare('
+		SELECT
+			users.id AS userId, users.user AS userName,
+			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
+			albums.id AS id, albums.name, albums.description,
+			(SELECT src FROM pics WHERE id = albums.picid) AS photo,
+			(SELECT SUM(listens) FROM music WHERE music.albumid = albums.id) AS plays,
+			(SELECT SUM(downloads) FROM music WHERE music.albumid = albums.id) AS downloads
+		FROM
+			albums, users
+		WHERE
+			albums.usid = users.id AND albums.id = ?
+		LIMIT 1');
+	$stmt->execute(Array($id));
+	
+	$info = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	
+	if(count($info)==1){
+		$info = $info[0];
+	}
+	
+	// Fix data
+	$info['photo'] = 'http://static.djs-music.com/'.$info['photo'];
+	
+	$user = Array(
+		'id' => $info['userId'],
+		'name' => ucwords($info['userName']),
+		'photo' => 'http://static.djs-music.com/'.$info['userPhoto']
 	);
 	
-	echo json_encode($album);
+	// Delete those from the result
+	unset($info['userId']);
+	unset($info['userName']);
+	unset($info['userPhoto']);
+	
+	$return = Array(
+		'album' => $info,
+		'artist'=> $user
+	);
+		
+	echo json_encode($return);
+	return;
 }
 
 // Sample
 function getUsers(){
+	$con = getConnection();
+	
+	$stmt = $con->prepare('
+		SELECT
+			users.id, users.user AS name, users.city, users.country, users.web, users.interests AS description,
+			(SELECT src FROM pics WHERE id = users.picid) AS photo,
+			(SELECT SUM(listens) FROM music WHERE music.usid = users.id) AS plays,
+			(SELECT SUM(downloads) FROM music WHERE music.usid = users.id) AS downloads
+		FROM
+			users
+		WHERE
+			users.id = ?
+		LIMIT 1');
+	$stmt->execute(Array($id));
+	
+	$info = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	echo json_encode('Users data');
 }
 
