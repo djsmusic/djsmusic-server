@@ -132,6 +132,8 @@ function getSongs(){
 		$data[] = $_GET['album'];
 	}
 	
+	$orderby = 'music.timestamp DESC';
+	
 	if(isset($_GET['orderby'])){
 		switch($_GET['orderby']){
 			case 'best':
@@ -140,10 +142,7 @@ function getSongs(){
 			case 'downloads':
 				$orderby = 'music.downloads DESC';
 				break;
-			default:
-			case 'release':
-				$orderby = 'music.timestamp DESC';
-				break;
+			// No need for default because it's outside
 		}
 	}
 	
