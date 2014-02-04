@@ -109,6 +109,7 @@ function getSong($id){
  * Order results:
  * 	- Downloads
  * 	- Release date
+ *  - Best tracks
  * Paging:
  * 	- Per page
  * 	- Page
@@ -131,6 +132,21 @@ function getSongs(){
 		$data[] = $_GET['album'];
 	}
 	
+	if(isset($_GET['orderby'])){
+		switch($_GET['orderby']){
+			case 'best':
+				$orderby = '((6*(music.r_total/music.r_users)) + 0.7*(music.r_total/music.r_users)*(music.downloads/(1.4*music.listens)) + 2.3*(music.r_total/music.r_users)*(music.r_users/music.listens)) + 0.05*music.listens DESC';
+				break;
+			case 'downloads':
+				$orderby = 'music.downloads DESC';
+				break;
+			default:
+			case 'release':
+				$orderby = 'music.timestamp DESC';
+				break;
+		}
+	}
+	
 	$stmt = $con->prepare('
 		SELECT
 			music.id, music.title AS name, music.extra AS description, ROUND(music.size/1000000,2) AS size, music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating, music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
@@ -145,7 +161,7 @@ function getSongs(){
 			music.usid = users.id
 			'.$filters.'
 		ORDER BY
-			music.timestamp DESC
+			'.$orderby.'
 		LIMIT 0,10');
 	$stmt->execute($data);
 	
@@ -363,7 +379,7 @@ function getUser($id){
 	
 	$info['photo'] = 'http://static.djs-music.com/'.$info['photo'];
 	$info['name'] = ucwords($info['name']);
-	$info['description'] = ucfirst($info['description']);
+	$info['description'] = ucfirst(iconv("ISO-8859-1","UTF-8",$info['description']));
 	
 	$return = Array(
 		'artist' => $info
