@@ -1,5 +1,12 @@
 <?php
-header('Access-Control-Allow-Origin: *');  
+header('Access-Control-Allow-Origin: *');
+header('Content-Encoding: indentity');
+// Disable GZIP compression for the API
+ini_set('zlib.output_compression', 'Off');
+ini_set('output_buffering', 'Off');
+ini_set('output_handler', '');
+
+// Start SLIM App
 require 'Slim/Slim.php';
 /*
  * If you are forking this you will need a set of keys.
@@ -20,7 +27,6 @@ $app->contentType("application/json");
 
 $app->setName('DJsMusic');
 
-
 // API endpoints
 $app->get('/', 'getInfo');
 // Music endpoint
@@ -32,12 +38,59 @@ $app->get('/albums/:param', 'getAlbum');
 // Users endpoint
 $app->get('/users', 'getUsers');
 $app->get('/users/:param', 'getUser');
+// Auth
+$app->get('/auth', 'getAuth');
+$app->get('/user', 'getAuth');
+$app->post('/auth/login', 'login');
 
 $app->run();
 
 // Functions
 function getInfo(){
-	echo json_encode('DJs Music API v1.0');
+	$return = json_encode('DJs Music API v1.0');
+	setSizeHeader($return);
+	echo $return;
+	return;
+}
+
+/**
+ *  Check user Auth status based on cookie
+ */
+function getAuth(){
+	$return = json_encode(Array('error' => 'Client has no valid login cookies'));
+	setSizeHeader($return);
+	echo $return;
+	return;
+}
+
+function login(){
+	// Login data is coming as a payload in the body
+	$data = json_decode(file_get_contents('php://input'));
+	if(!isset($data->email) || !isset($data->pass)){
+		echo json_encode(Array('error'=>'You must indicate user and password'));
+		return;
+	}
+	// Check in the database
+	$con = getConnection();
+	$stmt = $con->prepare('SELECT id FROM users WHERE email = :email AND pass = :pass LIMIT 1');
+	
+	$stmt->bindValue(':email',$data->email);
+	$stmt->bindValue(':pass',sha1($data->pass));
+	
+	$stmt->execute();
+	
+	$user = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	if(count($user)<1){
+		$return = json_encode(Array('error'=>'Invalid email or password','errorType'=>1));
+		setSizeHeader($return);
+		echo $return;
+		return;
+	}else{
+		$return = json_encode(Array('user'=>$user));
+		setSizeHeader($return);
+		echo $return;
+		return;
+	}
 }
 
 /**
@@ -52,7 +105,8 @@ function getSong($id){
 			users.id AS artistId, users.user,
 			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
 			albums.id AS albumId, albums.name AS albumName,
-			(SELECT src FROM pics WHERE id = albums.picid) AS albumPhoto
+			(SELECT src FROM pics WHERE id = albums.picid) AS albumPhoto,
+			(SELECT COUNT(*) FROM music WHERE usid = users.id) AS trackNum
 		FROM
 			music LEFT OUTER JOIN albums ON music.albumid = albums.id,
 			users
@@ -63,7 +117,13 @@ function getSong($id){
 	
 	$track = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	
-	$track = $track[0];
+	if(count($track)>0){
+		$track = $track[0];
+	}else{
+		echo json_encode(Array());
+		return;
+	}
+	
 	// Fix results
 	$track['name'] = ucwords($track['name']);
 	$track['user'] = ucwords($track['user']);
@@ -74,7 +134,8 @@ function getSong($id){
 	$user = Array(
 		'id' => $track['artistId'],
 		'name' => $track['user'],
-		'photo' => 'http://static.djs-music.com/'.$track['userPhoto']
+		'photo' => 'http://static.djs-music.com/'.$track['userPhoto'],
+		'tracks'=> $track['trackNum']
 	);
 	
 	$album = Array(
@@ -90,6 +151,7 @@ function getSong($id){
 	unset($track['albumId']);
 	unset($track['albumName']);
 	unset($track['albumPhoto']);
+	unset($track['trackNum']);
 	
 	$result = Array(
 		'track'=> $track,
@@ -97,12 +159,16 @@ function getSong($id){
 		'album' => $album
 	);
 	
-	echo json_encode($result);
+	$return = json_encode($result);
+	setSizeHeader($return);
+	echo $return;
 	return;
 }
 
 /**
  * Get a list of tracks with optional filters applied
+ * Search:
+ * 	- Title
  * Possible filters:
  * 	- User
  * 	- Album
@@ -118,34 +184,65 @@ function getSongs(){
 	$con = getConnection();
 	
 	// Filter data
-	$filters = '';
 	$data = Array();
+	$filters = '';
 	
 	// Detect filters
 	if(isset($_GET['user']) && $_GET['user']>0 && is_numeric($_GET['user'])){
-		$filters .= ' AND users.id = ?';
-		$data[] = $_GET['user'];
+		$filters .= ' AND users.id = :usid';
+		$data[':usid'][] = $_GET['user'];
+		$data[':usid'][] = PDO::PARAM_INT;
 	}
 	
 	if(isset($_GET['album']) && $_GET['album']>0 && is_numeric($_GET['album'])){
-		$filters .= ' AND music.albumid = ?';
-		$data[] = $_GET['album'];
+		$filters .= ' AND music.albumid = :albumid';
+		$data[':albumid'][] = $_GET['album'];
+		$data[':albumid'][] = PDO::PARAM_INT;
 	}
 	
+	// Title
+	if(isset($_GET['title']) && strlen($_GET['title'])>0){
+		$filters .= ' AND music.title LIKE :title';
+		$data[':title'][] = '%'.$_GET['title'].'%';
+		$data[':title'][] = PDO::PARAM_STR;
+	}
+
+	// Offset
+	if(isset($_GET['items']) && $_GET['items']>5 && is_numeric($_GET['items']) && $_GET['items'] < 50){
+		$data[':limit'][] = intval($_GET['items']);
+		$data[':limit'][] = PDO::PARAM_INT;
+		$limit = $_GET['items'];
+		
+	}else{
+		$data[':limit'][] = 10;
+		$data[':limit'][] = PDO::PARAM_INT;
+		$limit = 10;
+	}
+	
+	// Offset
+	if(isset($_GET['page']) && $_GET['page']>0 && is_numeric($_GET['page'])){
+		$data[':offset'][] = $_GET['page']*$limit;
+		$data[':offset'][] = PDO::PARAM_INT;
+	}else{
+		$data[':offset'][] = 0;
+		$data[':offset'][] = PDO::PARAM_INT;
+	}
+	
+	// Ordering
 	$orderby = 'music.timestamp DESC';
 	
 	if(isset($_GET['orderby'])){
 		switch($_GET['orderby']){
 			case 'best':
-				$orderby = '((6*(music.r_total/music.r_users)) + 0.7*(music.r_total/music.r_users)*(music.downloads/(1.4*music.listens)) + 2.3*(music.r_total/music.r_users)*(music.r_users/music.listens)) + 0.05*music.listens DESC';
+				$orderby = '((6*(music.r_total/music.r_users)) + 0.7*(music.r_total/music.r_users)*(music.downloads/(1.4*music.listens)) + 2.3*(music.r_total/music.r_users)*(music.r_users/music.listens)) + 0.05*music.listens + 0.1*music.downloads + 0.0001*music.timestamp DESC';
 				break;
 			case 'downloads':
 				$orderby = 'music.downloads DESC';
 				break;
-			// No need for default because it's outside
 		}
 	}
-	
+
+	// Prepared statement
 	$stmt = $con->prepare('
 		SELECT
 			music.id, music.title AS name, music.extra AS description, ROUND(music.size/1000000,2) AS size, music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating, music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
@@ -161,8 +258,17 @@ function getSongs(){
 			'.$filters.'
 		ORDER BY
 			'.$orderby.'
-		LIMIT 0,10');
-	$stmt->execute($data);
+		LIMIT :offset,:limit');
+	
+	// Bind values
+	while(list($k, $v) = each($data)){
+		$stmt->bindValue($k,$v[0],$v[1]);
+	}
+
+	//$stmt->bindValue(':orderby', $orderby);
+	
+	// Execute query
+	$stmt->execute();
 	
 	$tracks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	$total = count($tracks);
@@ -210,7 +316,9 @@ function getSongs(){
 		);
 	}
 	
-	echo json_encode($return);
+	$return = json_encode($return);
+	setSizeHeader($return);
+	echo $return;
 	return;
 }
 
@@ -219,18 +327,62 @@ function getAlbums(){
 	$con = getConnection();
 	
 	// Filter data
-	$filters = '';
 	$data = Array();
+	$filters = '';
 	
 	// Detect filters
 	if(isset($_GET['user']) && $_GET['user']>0 && is_numeric($_GET['user'])){
-		$filters .= ' AND users.id = ?';
-		$data[] = $_GET['user'];
+		$filters .= ' AND users.id = :usid';
+		$data[':usid'][] = $_GET['user'];
+		$data[':usid'][] = PDO::PARAM_INT;
 	}
 	
 	if(isset($_GET['album']) && $_GET['album']>0 && is_numeric($_GET['album'])){
-		$filters .= ' AND music.albumid = ?';
-		$data[] = $_GET['album'];
+		$filters .= ' AND music.albumid = :albumid';
+		$data[':albumid'][] = $_GET['album'];
+		$data[':albumid'][] = PDO::PARAM_INT;
+	}
+	
+	// Title
+	if(isset($_GET['name']) && strlen($_GET['name'])>0){
+		$filters .= ' AND album.name LIKE :name';
+		$data[':name'][] = '%'.$_GET['name'].'%';
+		$data[':name'][] = PDO::PARAM_STR;
+	}
+
+	// Offset
+	if(isset($_GET['items']) && $_GET['items']>0 && is_numeric($_GET['items']) && $_GET['items'] < 50){
+		$data[':limit'][] = $_GET['items'];
+		$data[':limit'][] = PDO::PARAM_INT;
+		$limit = $_GET['items'];
+		
+	}else{
+		$data[':limit'][] = 10;
+		$data[':limit'][] = PDO::PARAM_INT;
+		$limit = 10;
+	}
+	
+	// Offset
+	if(isset($_GET['page']) && $_GET['page']>0 && is_numeric($_GET['page'])){
+		$data[':offset'][] = $_GET['page']*$limit;
+		$data[':offset'][] = PDO::PARAM_INT;
+	}else{
+		$data[':offset'][] = 0;
+		$data[':offset'][] = PDO::PARAM_INT;
+	}
+	
+	// Ordering
+	$orderby = 'albums.timestamp DESC';
+	
+	if(isset($_GET['orderby'])){
+		switch($_GET['orderby']){
+			case 'plays':
+				$orderby = 'plays DESC';
+				break;
+			case 'downloads':
+				$orderby = 'downloads DESC';
+				break;
+		}
 	}
 	
 	$stmt = $con->prepare('
@@ -247,8 +399,16 @@ function getAlbums(){
 		WHERE
 			albums.usid = users.id
 			'.$filters.'
-		LIMIT 10');
-	$stmt->execute($data);
+		ORDER BY
+			'.$orderby.'
+		LIMIT :offset,:limit');
+		
+	// Bind values
+	while(list($k, $v) = each($data)){
+		$stmt->bindValue($k,$v[0],$v[1]);
+	}
+	
+	$stmt->execute();
 	
 	$albums = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	
@@ -279,7 +439,9 @@ function getAlbums(){
 		);
 	}
 	
-	echo json_encode($return);
+	$return = json_encode($return);
+	setSizeHeader($return);
+	echo $return;
 	return;
 }
 
@@ -328,29 +490,18 @@ function getAlbum($id){
 		'artist'=> $user
 	);
 		
-	echo json_encode($return);
+	$return = json_encode($return);
+	setSizeHeader($return);
+	echo $return;
 	return;
 }
 
 // Sample
 function getUsers(){
-	$con = getConnection();
-	
-	$stmt = $con->prepare('
-		SELECT
-			users.id, users.user AS name, users.city, users.country, users.web, users.interests AS description,
-			(SELECT src FROM pics WHERE id = users.picid) AS photo,
-			(SELECT SUM(listens) FROM music WHERE music.usid = users.id) AS plays,
-			(SELECT SUM(downloads) FROM music WHERE music.usid = users.id) AS downloads
-		FROM
-			users
-		WHERE
-			users.id = ?
-		LIMIT 1');
-	$stmt->execute(Array($id));
-	
-	$info = $stmt->fetchAll(PDO::FETCH_ASSOC);
-	echo json_encode('Users data');
+	$return = json_encode('Not ready yet');
+	setSizeHeader($return);
+	echo $return;
+	return;
 }
 
 // Sample
@@ -384,7 +535,9 @@ function getUser($id){
 		'artist' => $info
 	);
 	
-	echo json_encode($return);
+	$return = json_encode($return);
+	setSizeHeader($return);
+	echo $return;
 	return;
 }
 
@@ -396,4 +549,10 @@ function getConnection() {
     $dbh = new PDO("mysql:host={$dbhost};dbname={$dbname}", DB_USER, DB_PASS);  
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     return $dbh;
+}
+
+// Set the size header for a given string
+function setSizeHeader($content){
+	$size = strlen($content);
+	header("Content-Length: $size");
 }
