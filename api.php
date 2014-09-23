@@ -40,8 +40,5 @@ $app->run();
 
 // Functions
 function getInfo(){
-	$return = json_encode('DJs Music API v1.0');
-	setSizeHeader($return);
-	echo $return;
-	return;
+	return sendResponse('DJs Music API v1.1');
 }
