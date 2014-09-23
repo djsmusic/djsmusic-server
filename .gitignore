@@ -1,5 +1,9 @@
 # Logs
 
+vendor/*
+composer.phar
+composer.lock
+
 *.log
 
 #Sensitive files

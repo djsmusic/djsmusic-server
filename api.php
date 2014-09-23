@@ -7,15 +7,13 @@ ini_set('output_buffering', 'Off');
 ini_set('output_handler', '');
 
 // Start SLIM App
-require 'Slim/Slim.php';
+require 'vendor/autoload.php';
 /*
  * If you are forking this you will need a set of keys.
  * Take a look at keys.sample.php
  * The production keys are ignored for security purposes.
  */
 require 'keys.production.php';
-
-\Slim\Slim::registerAutoloader();
 
 // DJs Music API configuration
 $app = new \Slim\Slim(array(
