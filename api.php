@@ -1,4 +1,10 @@
 <?php
+define('PROJECT_ROOT', realpath(__DIR__));
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 header('Access-Control-Allow-Origin: *');
 header('Content-Encoding: indentity');
 
@@ -8,37 +14,24 @@ ini_set('output_buffering', 'Off');
 ini_set('output_handler', '');
 
 // Start SLIM App
-require 'vendor/autoload.php';
+require PROJECT_ROOT . '/vendor/autoload.php';
 
 // Load helper functions
-require 'lib/common.php';
+require_once PROJECT_ROOT . '/lib/common.php';
 
-/*
- * If you are forking this you will need a set of keys.
- * Take a look at keys.sample.php
- * The production keys are ignored for security purposes.
- */
-require 'keys.production.php';
+$composer = json_decode(file_get_contents(__DIR__ . '/composer.json'));
 
 // DJs Music API configuration
-	$app = new \Slim\Slim(array(
-		'mode' => 'development', 	// production/development
-		'debug' => true,			// true/false
-	));
-	$app->contentType("application/json");
-	$app->setName('DJsMusic');
+$app = new \Slim\Slim(array(
+	'version' => $composer->version,	// API version, from Composer settings
+	'mode' => 'development', 			// production/development/testing
+	'debug' => true,					// true/false
+));
 
-// API endpoints
-	$app->get('/', 'getInfo');
+$app->container->singleton('common', function(){
+	return new Common(\Slim\Slim::getInstance());
+});
 
-// Load other routes
-	require 'routes/albums.php';
-	require 'routes/users.php';
-	require 'routes/music.php';
+require PROJECT_ROOT . '/app.php';
 
 $app->run();
-
-// Functions
-function getInfo(){
-	return sendResponse('DJs Music API v0.1');
-}

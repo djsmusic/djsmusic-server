@@ -3,25 +3,24 @@
  * Authentication Endpoint
  */
 
-$app->get('/auth', 'getAuth');
-$app->get('/user', 'getAuth');
-$app->post('/auth/login', 'login');
-
 /**
  *  Check user Auth status based on cookie
  */
-function getAuth(){
-	return sendResponse('Not ready yet', 501);
-}
+$app->get('/auth', function () use ($app) {
+	return $app->common->sendResponse('Not ready yet', 501);
+});
+$app->get('/user', function () use ($app) {
+	return $app->common->sendResponse('Not ready yet', 501);
+});
 
-function login(){
+$app->post('/auth/login', function () use ($app) {
 	// Login data is coming as a payload in the body
 	$data = json_decode(file_get_contents('php://input'));
 	if(!isset($data->email) || !isset($data->pass)){
 		return sendResponse(Array('error'=>'You must indicate user and password'), 400);
 	}
 	// Check in the database
-	$con = getConnection();
+	$con = $app->common->getConnection();
 	$stmt = $con->prepare('SELECT id FROM users WHERE email = :email AND pass = :pass LIMIT 1');
 	
 	$stmt->bindValue(':email',$data->email);
@@ -32,8 +31,8 @@ function login(){
 	$user = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 	if(count($user)<1){
-		return sendResponse(Array('error'=>'Invalid email or password','errorType'=>1), 401);
+		return $app->common->sendResponse(Array('error'=>'Invalid email or password','errorType'=>1), 401);
 	}else{
-		return sendResponse(Array('user'=>$user));
+		return $app->common->sendResponse(Array('user'=>$user));
 	}
-}
+});

@@ -3,11 +3,8 @@
  * Albums Endpoint
  */
 
-$app->get('/albums', 'getAlbums');
-$app->get('/albums/:param', 'getAlbum');
-
-function getAlbums(){
-	$con = getConnection();
+$app->get('/albums', function () use ($app) {
+	$con = $app->common->getConnection();
 	
 	// Filter data
 	$data = Array();
@@ -122,12 +119,12 @@ function getAlbums(){
 		);
 	}
 
-	return sendResponse($return);
-}
+	return $app->common->sendResponse($return);
+});
 
 // Sample
-function getAlbum($id){
-	$con = getConnection();
+$app->get('/albums/:param', function ($id) use ($app) {
+	$con = $app->common->getConnection();
 	
 	$stmt = $con->prepare('
 		SELECT
@@ -175,5 +172,5 @@ function getAlbum($id){
 		'artist'=> $user
 	);
 		
-	return sendResponse($return);
-}
+	return $app->common->sendResponse($return);
+});

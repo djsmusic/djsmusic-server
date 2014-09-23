@@ -3,14 +3,11 @@
  * Music Endpoint
  */
 
-$app->get('/music', 'getSongs');
-$app->get('/music/:param', 'getSong');
-
 /**
  * Get a Song Object for the specified $id
  */
-function getSong($id){
-	$con = getConnection();
+$app->get('/music/:param', function ($id) use ($app) {
+	$con = $app->common->getConnection();
 	
 	$stmt = $con->prepare('
 		SELECT
@@ -33,7 +30,7 @@ function getSong($id){
 	if(count($track)>0){
 		$track = $track[0];
 	}else{
-		return sendResponse(
+		return $app->common->sendResponse(
 			Array(
 				'track'=> '',
 				'artist'=> '',
@@ -71,12 +68,12 @@ function getSong($id){
 	unset($track['albumPhoto']);
 	unset($track['trackNum']);
 	
-	return sendResponse(Array(
+	return $app->common->sendResponse(Array(
 		'track'=> $track,
 		'artist'=> $user,
 		'album' => $album
 	));
-}
+});
 
 /**
  * Get a list of tracks with optional filters applied
@@ -93,8 +90,8 @@ function getSong($id){
  * 	- Per page
  * 	- Page
  */
-function getSongs(){
-	$con = getConnection();
+$app->get('/music', function () use ($app) {
+	$con = $app->common->getConnection();
 	
 	// Filter data
 	$data = Array();
@@ -229,5 +226,5 @@ function getSongs(){
 		);
 	}
 	
-	return sendResponse($return);
-}
+	return $app->common->sendResponse($return);
+});

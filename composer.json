@@ -1,5 +1,20 @@
 {
+	"name": "aurbano/DJsMusic-Server",
+	"description": "DJs Music Server API",
+	"license": "MIT",
+	"version": "0.1.1",
+	"authors": [
+		{
+			"name": "Alejandro U. Alvarez",
+			"email": "aluralma@gmail.com",
+			"role": "Developer"
+        }
+    ],
 	"require": {
-		"slim/slim": "2.*"
+		"slim/slim": "2.*",
+		"there4/slim-test-helpers": "dev-master"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "3.7.*"
 	}
 }

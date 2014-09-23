@@ -3,16 +3,13 @@
  * Users Endpoint
  */
 
-$app->get('/users', 'getUsers');
-$app->get('/users/:param', 'getUser');
-
-function getUsers(){
-	return sendResponse('Not ready yet', 501);
-}
+$app->get('/users', function () use ($app) {
+	return $app->common->sendResponse('Not ready yet', 501);
+});
 
 // Sample
-function getUser($id){
-	$con = getConnection();
+$app->get('/users/:param', function ($id) use ($app) {
+	$con = $app->common->getConnection();
 	
 	$stmt = $con->prepare('
 		SELECT
@@ -32,7 +29,7 @@ function getUser($id){
 	if(count($info)==1){
 		$info = $info[0];
 	}else{
-		return sendResponse(array('artist'=>''), 404);
+		return $app->common->sendResponse(array('artist'=>''), 404);
 	}
 
 
@@ -47,5 +44,5 @@ function getUser($id){
 		'artist' => $info
 	);
 	
-	return sendResponse($return);
-}
+	return $app->common->sendResponse($return);
+});
