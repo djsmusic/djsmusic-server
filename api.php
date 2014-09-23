@@ -40,5 +40,5 @@ $app->run();
 
 // Functions
 function getInfo(){
-	return sendResponse('DJs Music API v1.1');
+	return sendResponse('DJs Music API v0.1');
 }
