@@ -1,5 +1,7 @@
 ![DJs Music](http://static.djs-music.com/img/body/logo.gif)
 
+[![Build Status](https://travis-ci.org/DJsMusic/DJsMusic-Server.svg?branch=master)](https://travis-ci.org/DJsMusic/DJsMusic-Server)
+
 > DJs Music API, open source as well as the client
 
 To run the API server you need to install Composer:
