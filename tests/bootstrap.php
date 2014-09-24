@@ -8,11 +8,11 @@ define('PROJECT_ROOT', realpath(__DIR__ . '/..'));
 
 use There4\Slim\Test\WebTestCase;
 
-require_once PROJECT_ROOT . '/vendor/autoload.php';
+require PROJECT_ROOT . '/vendor/autoload.php';
 
 require PROJECT_ROOT . '/keys.testing.php';
 
-require_once PROJECT_ROOT . '/lib/common.php';
+require PROJECT_ROOT . '/lib/common.php';
 
 // Initialize our own copy of the slim application
 class LocalWebTestCase extends WebTestCase {
@@ -26,7 +26,7 @@ class LocalWebTestCase extends WebTestCase {
       $app->common = new Common($app);
 
       // Include our core application file
-      require_once PROJECT_ROOT . '/app.php';
+      require PROJECT_ROOT . '/app.php';
 
       return $app;
     }

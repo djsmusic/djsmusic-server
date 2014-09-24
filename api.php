@@ -21,7 +21,7 @@ require PROJECT_ROOT . '/vendor/autoload.php';
  * Take a look at keys.sample.php
  * The production keys are ignored for security purposes.
  */
-require PROJECT_ROOT . '/keys.production.php';
+require PROJECT_ROOT . '/keys.testing.php';
 
 // Load helper functions
 require_once PROJECT_ROOT . '/lib/common.php';

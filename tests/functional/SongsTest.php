@@ -16,6 +16,6 @@ class SongsTest extends LocalWebTestCase
 
         $songData = json_decode($this->client->response->body());
 
-        $this->assertSame("Demo song", $songData['title']);
+        $this->assertSame("Demo Song", $songData->track->name);
     }
 }
