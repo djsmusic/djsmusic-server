@@ -10,6 +10,8 @@ use There4\Slim\Test\WebTestCase;
 
 require_once PROJECT_ROOT . '/vendor/autoload.php';
 
+require PROJECT_ROOT . '/keys.testing.php';
+
 require_once PROJECT_ROOT . '/lib/common.php';
 
 // Initialize our own copy of the slim application

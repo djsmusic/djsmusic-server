@@ -4,9 +4,15 @@ php:
   - 5.3
   - 5.4
 
+services:
+  - mysql
+
 before_install:
   - composer self-update
   - composer install --dev -n --prefer-source
+  - mysql -e 'create database djsmusic;'
+  - mysql -utravis -p -h localhost -D djsmusic < ./lib/db/structure.sql
+  - mysql -utravis -p -h localhost -D djsmusic < ./lib/db/testData.sql
 
 script: ./vendor/bin/phpunit
 
