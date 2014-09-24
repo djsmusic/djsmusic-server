@@ -50,6 +50,8 @@ $app->container->singleton('common', function(){
 $OAuthServer = new \League\OAuth2\Server\Authorization(new ClientModel($app), new SessionModel($app), new ScopeModel($app));
 // Enable support for the authorization code grant
 $OAuthServer->addGrantType(new \League\OAuth2\Server\Grant\AuthCode());
+// Resource Server
+$OAuthResourceServer = new \League\OAuth2\Server\Resource(new SessionModel($app), new ScopeModel($app));
 
 require PROJECT_ROOT . '/app.php';
 

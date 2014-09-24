@@ -6,13 +6,13 @@ $app->setName('DJsMusic');
 /**
  *  Check that a supplied OAuth token exists and is valid
  */
-$checkToken = function () use ($OAuthServer, $app) {
+$checkToken = function () use ($OAuthResourceServer, $app) {
 
-	return function() use ($OAuthServer, $app){
+	return function() use ($OAuthResourceServer, $app){
 		// Test for token existance and validity
     	try {
 
-    		$OAuthServer->isValid();
+    		$OAuthResourceServer->isValid();
 
     	}catch (\League\OAuth2\Server\Exception\InvalidAccessTokenException $e){
     		// The access token is missing or invalid...
