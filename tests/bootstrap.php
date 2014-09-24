@@ -14,6 +14,11 @@ require PROJECT_ROOT . '/keys.testing.php';
 
 require PROJECT_ROOT . '/lib/common.php';
 
+// Load OAuth models
+require PROJECT_ROOT . '/lib/storage/model_client.php';
+require PROJECT_ROOT . '/lib/storage/model_scope.php';
+require PROJECT_ROOT . '/lib/storage/model_session.php';
+
 // Initialize our own copy of the slim application
 class LocalWebTestCase extends WebTestCase {
     public function getSlimInstance() {
@@ -24,6 +29,13 @@ class LocalWebTestCase extends WebTestCase {
       ));
 
       $app->common = new Common($app);
+
+      /**
+       * Setup the OAuth Server
+       */
+      $OAuthServer = new \League\OAuth2\Server\Authorization(new ClientModel($app), new SessionModel($app), new ScopeModel($app));
+      // Enable support for the authorization code grant
+      $OAuthServer->addGrantType(new \League\OAuth2\Server\Grant\AuthCode());
 
       // Include our core application file
       require PROJECT_ROOT . '/app.php';

@@ -4,78 +4,6 @@
  */
 
 /**
- * Get a Song Object for the specified $id
- */
-$app->get('/music/:param', function ($id) use ($app) {
-	$con = $app->common->getConnection();
-	
-	$stmt = $con->prepare('
-		SELECT
-			music.id, music.title AS name, music.extra AS description, ROUND(music.size/1000000,2) AS size, music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating, music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
-			users.id AS artistId, users.user,
-			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
-			albums.id AS albumId, albums.name AS albumName,
-			(SELECT src FROM pics WHERE id = albums.picid) AS albumPhoto,
-			(SELECT COUNT(*) FROM music WHERE usid = users.id) AS trackNum
-		FROM
-			music LEFT OUTER JOIN albums ON music.albumid = albums.id,
-			users
-		WHERE
-			music.usid = users.id AND music.id = ?
-		LIMIT 1');
-	$stmt->execute(Array($id));
-	
-	$track = $stmt->fetchAll(PDO::FETCH_ASSOC);
-	
-	if(count($track)>0){
-		$track = $track[0];
-	}else{
-		return $app->common->sendResponse(
-			Array(
-				'track'=> '',
-				'artist'=> '',
-				'album' => ''
-			)
-		, 404);
-	}
-	
-	// Fix results
-	$track['name'] = ucwords($track['name']);
-	$track['user'] = ucwords($track['user']);
-	$track['url'] = 'http://songs.djs-music.com/'.$track['url'];
-	$track['released'] = date("j M Y",$track['released']);
-	$track['tags'] = explode(',',$track['tags']);
-	
-	$user = Array(
-		'id' => $track['artistId'],
-		'name' => $track['user'],
-		'photo' => 'http://static.djs-music.com/'.$track['userPhoto'],
-		'tracks'=> $track['trackNum']
-	);
-	
-	$album = Array(
-		'id' => $track['albumId'],
-		'name' => $track['albumName'],
-		'photo' => 'http://static.djs-music.com/'.$track['albumPhoto']
-	);
-	
-	// Delete those from the result
-	unset($track['artistId']);
-	unset($track['user']);
-	unset($track['userPhoto']);
-	unset($track['albumId']);
-	unset($track['albumName']);
-	unset($track['albumPhoto']);
-	unset($track['trackNum']);
-	
-	return $app->common->sendResponse(Array(
-		'track'=> $track,
-		'artist'=> $user,
-		'album' => $album
-	));
-});
-
-/**
  * Get a list of tracks with optional filters applied
  * Search:
  * 	- Title
@@ -210,6 +138,8 @@ $app->get('/music', function () use ($app) {
 			'name' => $track['albumName'],
 			'photo' => 'http://static.djs-music.com/'.$track['albumPhoto']
 		);
+
+		if($track['rating'] == null) $track['rating'] = 0;
 		
 		// Delete those from the result
 		unset($track['artistId']);
@@ -227,4 +157,123 @@ $app->get('/music', function () use ($app) {
 	}
 	
 	return $app->common->sendResponse($return);
+});
+
+/**
+ * Get a Song Object for the specified $id
+ */
+$app->get('/music/:param', function ($id) use ($app) {
+	$con = $app->common->getConnection();
+	
+	$stmt = $con->prepare('
+		SELECT
+			music.id, music.title AS name, music.extra AS description, ROUND(music.size/1000000,2) AS size,
+			music.duration, music.downloads, music.listens AS plays, FLOOR(music.r_total/music.r_users) AS rating,
+			music.r_total, music.r_users,
+			music.timestamp AS released, CEIL(music.bitrate/1000) AS bitrate, music.src AS url, music.genres AS tags,
+			users.id AS artistId, users.user,
+			(SELECT src FROM pics WHERE id = users.picid) AS userPhoto,
+			albums.id AS albumId, albums.name AS albumName,
+			(SELECT src FROM pics WHERE id = albums.picid) AS albumPhoto,
+			(SELECT COUNT(*) FROM music WHERE usid = users.id) AS trackNum
+		FROM
+			music LEFT OUTER JOIN albums ON music.albumid = albums.id,
+			users
+		WHERE
+			music.usid = users.id AND music.id = ?
+		LIMIT 1');
+	$stmt->execute(Array($id));
+	
+	$track = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	
+	if(count($track)>0){
+		$track = $track[0];
+	}else{
+		return $app->common->sendResponse(
+			Array(
+				'track'=> '',
+				'artist'=> '',
+				'album' => ''
+			)
+		, 404);
+	}
+	
+	// Fix results
+	$track['name'] = ucwords($track['name']);
+	$track['user'] = ucwords($track['user']);
+	$track['url'] = 'http://songs.djs-music.com/'.$track['url'];
+	$track['released'] = date("j M Y",$track['released']);
+	$track['tags'] = explode(',',$track['tags']);
+	
+	$user = Array(
+		'id' => $track['artistId'],
+		'name' => $track['user'],
+		'photo' => 'http://static.djs-music.com/'.$track['userPhoto'],
+		'tracks'=> $track['trackNum']
+	);
+	
+	$album = Array(
+		'id' => $track['albumId'],
+		'name' => $track['albumName'],
+		'photo' => 'http://static.djs-music.com/'.$track['albumPhoto']
+	);
+	
+	// Delete those from the result
+	unset($track['artistId']);
+	unset($track['user']);
+	unset($track['userPhoto']);
+	unset($track['albumId']);
+	unset($track['albumName']);
+	unset($track['albumPhoto']);
+	unset($track['trackNum']);
+	
+	return $app->common->sendResponse(Array(
+		'track'=> $track,
+		'artist'=> $user,
+		'album' => $album
+	));
+});
+
+/**
+ * Get the ratings for a given song
+ */
+$app->get('/music/:param/rating', function ($id) use ($app) {
+	$con = $app->common->getConnection();
+	
+	$stmt = $con->prepare('
+		SELECT
+			FLOOR(music.r_total/music.r_users) AS rating,
+			music.r_total,
+			music.r_users
+		FROM
+			music
+		WHERE
+			music.id = ?
+		LIMIT 1');
+
+	$stmt->execute(Array($id));
+	
+	$track = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	
+	if(count($track)>0){
+		$track = $track[0];
+	}else{
+		return $app->common->sendResponse(
+			Array(
+				'rating'=> ''
+			)
+		, 404);
+	}
+
+	if($track['rating'] == null) $track['rating'] = 0;
+	
+	return $app->common->sendResponse($track);
+});
+
+/**
+ * Update a song's rating. This endpoint requires OAuth tokens
+ */
+$app->post('/music/:param/rating', $checkToken(), function($id) use($app){
+	$rating = $app->request->post('rating');
+	return $app->common->sendResponse('Your rating for song '.$id.' is '.$rating);
 });
