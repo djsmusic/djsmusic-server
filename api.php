@@ -21,13 +21,6 @@ require PROJECT_ROOT . '/lib/storage/model_client.php';
 require PROJECT_ROOT . '/lib/storage/model_scope.php';
 require PROJECT_ROOT . '/lib/storage/model_session.php';
 
-/**
- * Setup the OAuth Server
- */
-$OAuthServer = new \League\OAuth2\Server\Authorization(new ClientModel($app), new SessionModel($app), new ScopeModel($app));
-// Enable support for the authorization code grant
-$OAuthServer->addGrantType(new \League\OAuth2\Server\Grant\AuthCode());
-
 /*
  * If you are forking this you will need a set of keys.
  * Take a look at keys.sample.php
@@ -50,6 +43,13 @@ $app = new \Slim\Slim(array(
 $app->container->singleton('common', function(){
 	return new Common(\Slim\Slim::getInstance());
 });
+
+/**
+ * Setup the OAuth Server
+ */
+$OAuthServer = new \League\OAuth2\Server\Authorization(new ClientModel($app), new SessionModel($app), new ScopeModel($app));
+// Enable support for the authorization code grant
+$OAuthServer->addGrantType(new \League\OAuth2\Server\Grant\AuthCode());
 
 require PROJECT_ROOT . '/app.php';
 

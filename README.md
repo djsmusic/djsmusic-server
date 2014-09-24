@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/DJsMusic/DJsMusic-Server.svg?branch=master)](https://travis-ci.org/DJsMusic/DJsMusic-Server)
 
-> DJs Music API, open source as well as the client
+> DJs Music API, open source as well as the client. **Requires PHP >=5.4.0**
 
 To run the API server you need to install Composer:
 
