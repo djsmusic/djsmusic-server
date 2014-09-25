@@ -4,6 +4,11 @@
         <directory>tests</directory>
       </testsuite>
     </testsuites>
+    <filter>
+		<blacklist>
+			<directory suffix=".php">./vendor</directory>
+		</blacklist>
+	</filter>
     <logging>
         <log type="coverage-clover" target="build/logs/clover.xml"/>
     </logging>
