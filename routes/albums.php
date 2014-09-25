@@ -147,7 +147,7 @@ $app->get('/albums/:param', function ($id) use ($app) {
 	if(count($info)==1){
 		$info = $info[0];
 	}else{
-		return sendResponse(Array(
+		return $app->common->sendResponse(Array(
 			'album' => '',
 			'artist'=> ''
 		), 404);
