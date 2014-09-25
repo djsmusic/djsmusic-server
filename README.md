@@ -1,6 +1,6 @@
 ![DJs Music](http://static.djs-music.com/img/body/logo.gif)
 
-[![Build Status](https://travis-ci.org/DJsMusic/DJsMusic-Server.svg?branch=master)](https://travis-ci.org/DJsMusic/DJsMusic-Server)
+[![Build Status](https://travis-ci.org/DJsMusic/DJsMusic-Server.svg?branch=master)](https://travis-ci.org/DJsMusic/DJsMusic-Server) [![Coverage Status](https://coveralls.io/repos/DJsMusic/DJsMusic-Server/badge.png)](https://coveralls.io/r/DJsMusic/DJsMusic-Server)
 
 > DJs Music API, open source as well as the client. **Requires PHP >=5.4.0**
 
