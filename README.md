@@ -1,6 +1,6 @@
 ![DJs Music](http://static.djs-music.com/img/body/logo.gif)
 
-[![Build Status](https://travis-ci.org/DJsMusic/DJsMusic-Server.svg?branch=master)](https://travis-ci.org/DJsMusic/DJsMusic-Server) [![Coverage Status](https://coveralls.io/repos/DJsMusic/DJsMusic-Server/badge.png)](https://coveralls.io/r/DJsMusic/DJsMusic-Server) [![Dependency Status](https://www.versioneye.com/user/projects/542423fcbaec3fb5c6000196/badge.svg?style=flat)](https://www.versioneye.com/user/projects/542423fcbaec3fb5c6000196)
+[![Build Status](https://travis-ci.org/DJsMusic/DJsMusic-Server.svg?branch=master)](https://travis-ci.org/DJsMusic/DJsMusic-Server) [![Coverage Status](https://coveralls.io/repos/DJsMusic/DJsMusic-Server/badge.png?branch=master)](https://coveralls.io/r/DJsMusic/DJsMusic-Server?branch=master) [![Dependency Status](https://www.versioneye.com/user/projects/542423fcbaec3fb5c6000196/badge.svg?style=flat)](https://www.versioneye.com/user/projects/542423fcbaec3fb5c6000196)
 
 > DJs Music API, open source as well as the client. **Requires PHP >=5.4.0**
 
