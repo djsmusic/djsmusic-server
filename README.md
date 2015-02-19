@@ -1,5 +1,6 @@
-![DJs Music](http://static.djs-music.com/img/body/logo.gif)
+#![DJs Music](http://static.djs-music.com/img/body/logo.gif)
 
+[![Release](https://img.shields.io/github/release/DJsMusic/DJsMusic-Server.svg?style=flat-square)](https://github.com/DJsMusic/DJsMusic-Server/releases)
 [![Build Status](https://img.shields.io/travis/DJsMusic/DJsMusic-Server.svg?style=flat-square)](https://travis-ci.org/DJsMusic/DJsMusic-Server)
 [![Coverage Status](https://img.shields.io/coveralls/DJsMusic/DJsMusic-Server.svg?style=flat-square)](https://coveralls.io/r/DJsMusic/DJsMusic-Server?branch=master)
 [![Dependency Status](https://www.versioneye.com/user/projects/54e5cc27d1ec573c990006cf/badge.svg?style=flat)](https://www.versioneye.com/user/projects/54e5cc27d1ec573c990006cf)
