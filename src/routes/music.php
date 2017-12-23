@@ -271,9 +271,9 @@ $app->get('/music/:param/rating', function ($id) use ($app) {
 });
 
 /**
- * Update a song's rating. This endpoint requires OAuth tokens
+ * Update a song's rating. This endpoint requires authentication tokens
  */
-$app->post('/music/:param/rating', $checkToken(), function($id) use($app){
+$app->post('/music/:param/rating', function($id) use($app){
 	$rating = $app->request->post('rating');
 	return $app->common->sendResponse('Your rating for song '.$id.' is '.$rating);
 });

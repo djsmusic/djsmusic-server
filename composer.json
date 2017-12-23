@@ -1,5 +1,5 @@
 {
-	"name": "aurbano/DJsMusic-Server",
+	"name": "djsmusic/djsmusic-server",
 	"description": "DJs Music Server API",
 	"license": "MIT",
 	"version": "0.1.1",
@@ -13,7 +13,6 @@
 	"require": {
 		"slim/slim": "2.*",
 		"there4/slim-test-helpers": "dev-master",
-		"league/oauth2-server": "^4.1",
 		"satooshi/php-coveralls": "0.6.1"
 	},
 	"require-dev": {
